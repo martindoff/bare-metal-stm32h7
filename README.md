@@ -1,14 +1,14 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-    
+   <img src="https://github.com/mcauser/MCUDEV_DEVEBOX_H7XX_M/blob/master/docs/STM32H7XX_M.jpg" alt="Logo" width="300" height="300">
 
   <h3 align="center">Bare metal stm32h7</h3>
 
   <p align="center">
     A bare metal implementation of a blinky example for the stm32h743 with a simple makefile and without using HAL libraries. 
     <br />
-    <img src="https://github.com/mcauser/MCUDEV_DEVEBOX_H7XX_M/blob/master/docs/STM32H7XX_M.jpg" alt="Logo" width="300" height="300">
+    
   </p>
   
   
