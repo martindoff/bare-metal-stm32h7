@@ -71,9 +71,9 @@ AS_SRC    = ./startup/startup_stm32h743vitx.s
 C_SRC   = ./src/main.c
 C_SRC  += ./src/system_stm32h7xx.c
 
-INCLUDE  += -I./include/
-INCLUDE  += -I./Drivers/CMSIS/Device/ST/STM32H7xx/Include
-INCLUDE  += -I./Drivers/CMSIS/Include
+INCLUDE  += -I./include
+INCLUDE  += -I./include
+INCLUDE  += -I./drivers
 
 OBJS  = $(C_SRC:.c=.o)
 OBJS += $(CPP_SRC:.cpp=.o)
