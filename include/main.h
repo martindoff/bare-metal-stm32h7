@@ -36,14 +36,9 @@ extern "C" {
 
 /* Define registers */
 #define RCC_AHB4ENR   *(volatile uint32_t *)(RCC_BASE   + 0x0E0) // register APB2 for clock enabling
-#define GPIOA_MODER   *(volatile uint32_t *)(GPIOA_BASE + 0x00) // E port control register (config. I/O mode)
-#define GPIOA_OTYPER  *(volatile uint32_t *)(GPIOA_BASE + 0x04) // E port control register (config. output type)
-#define GPIOA_OSPEEDR *(volatile uint32_t *)(GPIOA_BASE + 0x08) // E port control register (config. speed)
-#define GPIOA_PUPDR   *(volatile uint32_t *)(GPIOA_BASE + 0x0C)
-#define GPIOA_ODR     *(volatile uint32_t *)(GPIOA_BASE + 0x14) // E port data register (read/write)
+
 
 // Bit fields
-#define GPIOAEN (  1 << 0) // IO port A clock enable
 #define GPIOA1  (1UL << 1)
 
 

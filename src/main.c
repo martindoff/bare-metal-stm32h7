@@ -29,7 +29,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void GPIO_Init(void); 
+static void GPIO_Init(void);
+void toggle_LED(void); 
 void delay(int comp); 
 
 /**
@@ -47,10 +48,8 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
-        GPIOA_ODR &= ~ GPIOA1; // pull down (clear) => ON
-    	delay(30000000);
-    	GPIOA_ODR |=   GPIOA1; // pull up (set) => OFF
-    	delay(30000000);
+        // Flash LED PA1
+        toggle_LED();
   }
 
 }
@@ -61,17 +60,19 @@ int main(void)
 static void GPIO_Init(void)
 {
   
-  //Initialize all configured peripherals
-  RCC_AHB4ENR |= GPIOAEN;
+  // Enable GPIOA clock
+  RCC_AHB4ENR |= RCC_AHB4ENR_GPIOAEN;
 
-  // Set GPIO
-  GPIOA_MODER   |=  (1 << 2);    // -> 01 in MODER1[1:0]
-  GPIOA_MODER   &= ~(1 << 3); // -> 01 in MODER1[1:0]
-  GPIOA_OTYPER  |=  (0 << 1);
-  GPIOA_OSPEEDR |=  (0 << 2);
-  GPIOA_OSPEEDR |=  (0 << 3);
-  GPIOA_PUPDR   |=  (0 << 2);
-  GPIOA_PUPDR   |=  (0 << 3);
+  // Set PA1 to output push-pull
+  GPIOA->MODER   &=  ~(0x3UL << 2U);
+  GPIOA->MODER   |=   (0x1UL << 2U);  //-> 01 in MODER1[1:0] (General purpose output mode)
+  GPIOA->OTYPER  &=  ~(0x1UL << 1U);
+  GPIOA->OTYPER  |=   (0x0UL << 1U);  //-> 0 in OT1 (Output push-pull)
+  GPIOA->OSPEEDR &=  ~(0x3UL << 2U);
+  GPIOA->OSPEEDR |=   (0x0UL << 2U);  //-> 00 in OSPEEDR1[1:0] (Low speed)
+  GPIOA->PUPDR   &=  ~(0x3UL << 2U);
+  GPIOA->PUPDR   |=   (0x0UL << 2U);  //-> 00 in PUPDR1[1:0] (No pull-up/-down)
+  
 
 }
 
@@ -85,7 +86,7 @@ void SystemClock_Config(void)
     /**  1) Boost the voltage scaling level to VOS0 to reach system maximum frequency **/
 	
     // Supply configuration update enable
-    MODIFY_REG (PWR->CR3, (PWR_CR3_SCUEN | PWR_CR3_LDOEN | PWR_CR3_BYPASS),  PWR_CR3_LDOEN);
+    MODIFY_REG(PWR->CR3, (PWR_CR3_SCUEN | PWR_CR3_LDOEN | PWR_CR3_BYPASS), PWR_CR3_LDOEN);
     for(int i=0; i<1500000;i++){__asm__("nop");}
   
     // Configure the Voltage Scaling 1 in order to modify ODEN bit 
@@ -131,18 +132,22 @@ void SystemClock_Config(void)
 	// Disable PLLFRACN
 	RCC->PLLCFGR &= ~(0x1UL << 0U);
 
-	//  Configure PLL  PLL1FRACN //__HAL_RCC_PLLFRACN_CONFIG(RCC_OscInitStruct->PLL.PLLFRACN);
+	//  Configure PLL  PLL1FRACN 
+	//__HAL_RCC_PLLFRACN_CONFIG(RCC_OscInitStruct->PLL.PLLFRACN);
 	RCC -> PLL1FRACR = 0;
 
-	//Select PLL1 input reference frequency range: VCI //__HAL_RCC_PLL_VCIRANGE(RCC_OscInitStruct->PLL.PLLRGE) ;
+	//Select PLL1 input reference frequency range: VCI 
+	//__HAL_RCC_PLL_VCIRANGE(RCC_OscInitStruct->PLL.PLLRGE) ;
 	//RCC->PLLCFGR |= RCC_PLLCFGR_PLL1RGE_3;
 	RCC->PLLCFGR |= (0x2UL << 2U);
 
-	// Select PLL1 output frequency range : VCO //__HAL_RCC_PLL_VCORANGE(RCC_OscInitStruct->PLL.PLLVCOSEL) ;
+	// Select PLL1 output frequency range : VCO 
+	//__HAL_RCC_PLL_VCORANGE(RCC_OscInitStruct->PLL.PLLVCOSEL) ;
 	//RCC->PLLCFGR &= ~RCC_PLLCFGR_PLL1VCOSEL;
 	RCC->PLLCFGR |= (0x0UL << 1U);
 
-	// Enable PLL System Clock output. // __HAL_RCC_PLLCLKOUT_ENABLE(RCC_PLL1_DIVP);//Bit 16 DIVP1EN: PLL1 DIVP divider output enable
+	// Enable PLL System Clock output. // __HAL_RCC_PLLCLKOUT_ENABLE(RCC_PLL1_DIVP);
+	//Bit 16 DIVP1EN: PLL1 DIVP divider output enable
 	RCC->PLLCFGR |= RCC_PLLCFGR_DIVP1EN;
 
 	// Enable PLL1Q Clock output. //__HAL_RCC_PLLCLKOUT_ENABLE(RCC_PLL1_DIVQ);
@@ -164,7 +169,7 @@ void SystemClock_Config(void)
 	RCC -> D1CFGR |= (0x08UL << 0U);
 
 
-	//D1CPRE[3:0]: D1 domain Core prescaler //0xxx: sys_ck not divided (default after reset)
+	//D1CPRE[3:0]: D1 domain Core prescaler //0xxx: sys_ck not div. (default after reset)
 	RCC -> D1CFGR |= (0x0UL << 8U);
 
 	//SW[2:0]: System clock switch//011: PLL1 selected as system clock (pll1_p_ck)
@@ -186,10 +191,23 @@ void SystemClock_Config(void)
 	RCC -> D3CFGR |=  (0b100 << 4U);
 
 	//Update global variables
-	const  uint8_t D1CorePrescTable[16] = {0, 0, 0, 0, 1, 2, 3, 4, 1, 2, 3, 4, 6, 7, 8, 9};
-	SystemD2Clock = (480000000 >> ((D1CorePrescTable[(RCC->D1CFGR & RCC_D1CFGR_HPRE)>> RCC_D1CFGR_HPRE_Pos]) & 0x1FU));
+	const uint8_t D1CorePrescTable[16] = {0, 0, 0, 0, 1, 2, 3, 4, 1, 2, 3, 4, 6, 7, 8, 9};
+	SystemD2Clock = (480000000 >> ((D1CorePrescTable[(RCC->D1CFGR & RCC_D1CFGR_HPRE) 
+	                                                   >> RCC_D1CFGR_HPRE_Pos]) & 0x1FU));
 	SystemCoreClock = 480000000;
 }
+
+/**
+  * Toggle LED #PA1 
+  */
+void toggle_LED(void) 
+{
+	GPIOA->ODR &= ~GPIOA1; // pull down (clear) => ON
+    delay(30000000);
+    GPIOA->ODR |=  GPIOA1; // pull up (set) => OFF
+    delay(30000000);
+}
+
 
 /**
   * Simulate a time delay 
