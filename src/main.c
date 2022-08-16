@@ -202,7 +202,7 @@ void SystemClock_Config(void)
   */
 void toggle_LED(void) 
 {
-	GPIOA->ODR &= ~GPIOA1; // pull down (clear) => ON
+    GPIOA->ODR &= ~GPIOA1; // pull down (clear) => ON
     delay(30000000);
     GPIOA->ODR |=  GPIOA1; // pull up (set) => OFF
     delay(30000000);
